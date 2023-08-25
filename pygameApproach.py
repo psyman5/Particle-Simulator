@@ -46,7 +46,7 @@ particleCount = 10 #how many particles
 
 particleAmount = []
 
-boundingBox = (0,0,1280,720)
+boundingBox = (0,0,1280,720) #for bounded areas.
 
 collDebugMode = False #debugger for collisions, ignore
 
