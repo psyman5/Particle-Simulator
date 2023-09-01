@@ -38,11 +38,11 @@ scene = vp.canvas(width = 1920, height = 1080)
 
 gravityVector = vp.vector(0, -9.81,0)
 
-particleCount = 2
+particleCount = 100
 
-boundingField = (50,50,50)
+boundingField = (500,500,500)
 
-startPosRng = [s for s in range(-20, 20)]
+startPosRng = [s for s in range(-200, 200)]
 
 veloRng = [s for s in range(-10, 10) if s != 0]
 
