@@ -31,13 +31,16 @@ class HeavyParticle(vp.vector):
         self.position = position
         self.velocity = velocity
 
+
+scene = vp.canvas(width = 1920, height = 1080)
+
 #firstParticle = vp.sphere(pos = vp.vector(0,0,0), radius = 2, color = vp.color.green)
 
-gravityVector = vp.vector(0,-4.9,0)
+gravityVector = vp.vector(0, -9.81,0)
 
-particleCount = 50
+particleCount = 2
 
-boundingField = (500,500,500)
+boundingField = (50,50,50)
 
 startPosRng = [s for s in range(-20, 20)]
 
@@ -47,19 +50,22 @@ sizeRng = [s for s in range(2) if s != 0]
 
 #particleList = [SphereParticle(position = (r.choice(rng),r.choice(rng), r.choice(rng)), velocity = (r.choice(rng),r.choice(rng), r.choice(rng)), size = r.randint(0,3), mass = 0) for s in range(0, particleCount)] 
 
-#pointerList = []
+c = vp.curve()
 
-sphereList = [vp.sphere(pos = vp.vector(r.choice(startPosRng),r.choice(startPosRng), r.choice(startPosRng)), radius = r.choice(sizeRng)) for p in range(particleCount)]
+sphereList = [vp.sphere(pos = vp.vector(r.choice(startPosRng),r.choice(startPosRng), r.choice(startPosRng)), radius = r.choice(sizeRng), make_trail = False) for p in range(particleCount)]
+sphereArray = np.array(sphereList)
 
-x = 0
-y = 0 
-z = 0
-
-#for s in sphereList:
-    #pointerList.append(vp.arrow(pos = vp.vector(s.pos.x, s.pos.y, s.pos.z), axis = vp.vector(0,0,0), shaftwidth = 1, headwidth = 1, round = False))
+'''for s in sphereList:
+    place = sphereList.index(s)
+    if place < len(sphereList):
+        curveList.append(vp.curve(vp.vector(s.pos.x,s.pos.y, s.pos.z), vp.vector(vp.vector(sphereList[sphereList.index(s) + 1].pos.x,sphereList[sphereList.index(s) + 1].pos.y, 
+                                                                                          sphereList[sphereList.index(s) + 1].pos.z))))'''
 
 
 sphereVelocities = [vp.vector(r.choice(veloRng),r.choice(veloRng),r.choice(veloRng)) for s in sphereList]
+sphereVeloArray = np.array(sphereVelocities)
+
+
 
 '''sphereList = [vp.sphere(pos = vp.vector(-10,0,0), 
                         radius = 1),
@@ -69,7 +75,7 @@ sphereVelocities = [vp.vector(r.choice(veloRng),r.choice(veloRng),r.choice(veloR
 
 #sphereVelocities = [vp.vector(r.choice(rng),r.choice(rng),r.choice(rng)) for s in sphereList]
 
-boundingShape = False
+boundingShape = True
 
 if boundingShape == True:
     boundingBox = vp.box(pos = vp.vector(0,0,0), size  = vp.vector(boundingField[0],boundingField[1],boundingField[2]), thickness = 1)
@@ -79,28 +85,33 @@ if boundingShape == True:
 
 #sphereOne.velocity = vp.vector(50,-70,-30)
 
+numberOfCalculations= []
+
 debugMode = False
 
-dt = 0.005
+dt = 1/100
 t = 0
 
 simRunning = True
 
 while simRunning == True:
-
+    vp.rate(100)
     t = t + dt
 
-    for s in sphereList:
+    for o in np.nditer(sphereArray, flags=['refs_ok','zerosize_ok']):
+
+        s = o.item()
 
         otherSphereList = [e for e in sphereList if e != s and math.sqrt(((e.pos.x-s.pos.x)**2)+((e.pos.y-s.pos.y)**2)+(((e.pos.z-s.pos.z)**2))) < 10]
-
-        '''for p in pointerList:
-            p.pos = s.pos
-
-            for e in otherSphereList:
-                p.axis = e.pos'''
+        otherSphereArray = np.array(otherSphereList)
+        '''if debugMode == True:
+            numberOfCalculations.append(len(otherSphereList))'''
         
-        for e in otherSphereList:
+        
+        for u in np.nditer(otherSphereArray, flags=['refs_ok','zerosize_ok']):
+
+            e = u.item()
+
             if abs(e.pos.x-s.pos.x) < (e.radius + s.radius) and math.sqrt(((e.pos.x-s.pos.x)**2)+((e.pos.y-s.pos.y)**2)+(((e.pos.z-s.pos.z)**2))) < s.radius*2:
                 if sphereVelocity.x > 0:
                     sphereVelocity.x = -sphereVelocity.x
@@ -124,10 +135,8 @@ while simRunning == True:
                     sphereVelocity = abs(sphereVelocity.z)
                 if debugMode == True:
                     print(f'X Collision at: {s.pos.z}')
-
+                    
         sphereVelocity = sphereVelocities[sphereList.index(s)]
-
-        s.pos = s.pos + (sphereVelocity * dt) #+ (gravityVector * dt**2))
 
         if s.pos.x + s.radius >= boundingField[0]/2 or s.pos.x - s.radius <= -boundingField[0]/2:
             sphereVelocity.x = -sphereVelocity.x
@@ -144,9 +153,7 @@ while simRunning == True:
             if debugMode == True:
                 print(f'Z Collision at: {s.pos.z}')
 
+        s.pos = s.pos + (sphereVelocity * dt) + (1/2 * gravityVector * dt**2)
 
+        sphereVelocity =  vp.vector(sphereVelocity.x,sphereVelocity.y,sphereVelocity.z)
 
-
-
-
-    vp.rate(100)
