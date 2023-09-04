@@ -205,4 +205,4 @@ while simRunning is True:
             
 
     except RuntimeError:
-        
+        SystemExit()
