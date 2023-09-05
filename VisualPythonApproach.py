@@ -32,27 +32,29 @@ class HeavyParticle(vp.vector):
         self.velocity = velocity
 
 
-scene = vp.canvas(width = 1920, height = 1080)
+scene = vp.canvas(width = 1280, height = 720)
 
 #firstParticle = vp.sphere(pos = vp.vector(0,0,0), radius = 2, color = vp.color.green)
 
 gravityVector = vp.vector(0, -9.81,0)
 
-particleCount = abs(100)
+particleCount = abs(30)
 
-rate = 3000
+rate = 100
+dt = .001
+t = 0
 
 boundingField = (6000,6000,6000)
 
 startPosRng = [s for s in range(int(-boundingField[0]/2), int(boundingField[0]/2))]
 
-veloRng = [s for s in range(-2000, 2000) if s != 0]
+veloRng = [s for s in range(-5000, 5000) if s != 0]
 
 sizeRng = [s for s in range(90) if s != 0]
 
 #particleList = [SphereParticle(position = (r.choice(rng),r.choice(rng), r.choice(rng)), velocity = (r.choice(rng),r.choice(rng), r.choice(rng)), size = r.randint(0,3), mass = 0) for s in range(0, particleCount)] 
 
-if particleCount < 100:
+if particleCount <= 100:
     sphereList = [vp.sphere(pos = vp.vector(r.choice(startPosRng),r.choice(startPosRng), r.choice(startPosRng)), radius = r.choice(sizeRng), make_trail = False, emissive = False) for p in range(particleCount)]
 else:
     sphereList = [vp.simple_sphere(pos = vp.vector(r.choice(startPosRng),r.choice(startPosRng), r.choice(startPosRng)), radius = r.choice(sizeRng), make_trail = False, emissive = False) for p in range(particleCount)]
@@ -87,20 +89,24 @@ if boundingShape is True:
     #boundingBox = vp.box(pos = vp.vector(0,0,0), size  = vp.vector(boundingField[0],boundingField[1],boundingField[2]), thickness = 1)
     boundingSphere = vp.sphere(pos = vp.vector(0,0,0), radius = boundingField[0])
 
+def rateChange(s):
+    rate = s.value
+    return rate
+    
+
+def timeIntervalChange(s):
+    dt = s.value
+    return dt
 
 
-#sphereOne = vp.sphere(pos = vp.vector(0,0,0), radius = .5)
+#rateSlider = vp.slider(min = 0, max = 2000, value = 1000, bind = rateChange)
 
-#sphereOne.velocity = vp.vector(50,-70,-30)
+#timeSlider = vp.slider(min = .001, max = .5, value = .001, bind = timeIntervalChange)
+
 
 numberOfCalculations= []
 
-
-
 debugMode = False
-
-dt = 1/rate
-t = 0
 
 coloringMode = True
 
@@ -108,6 +114,7 @@ simRunning = True
 
 while simRunning is True:
     try:
+
         vp.rate(rate)
         t = t + dt
 
@@ -203,6 +210,5 @@ while simRunning is True:
             elif sphereVelocities[sphereList.index(s)-1].y == 0:
                 s.color = vp.vector(0, 1 , 0)
             
-
     except RuntimeError:
         SystemExit()
