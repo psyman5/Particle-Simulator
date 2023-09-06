@@ -3,34 +3,80 @@ import math
 import cupy as cp
 import numpy as np
 import random as r
+from cupyx.profiler import benchmark
 
-tickRate = 100
-particleCount = 20
+
+
+
+scene = canvas(width = 1280, height = 720)
+
+tickRate = 1000000
+particleCount = 1000
 t = 0
-dt = .001
+dt = .0000001
+
+boundingField = (1000,1000,1000)
+
+startPosRng = [s for s in range(int(-boundingField[0]/2), int(boundingField[0]/2))]
+
+veloRng = [s for s in range(-10000, 10000) if s != 0]
+
+sizeRng = [s for s in range(40) if s != 0]
+
+gravity = -9.81
+
+#particleList = [SphereParticle(position = (r.choice(rng),r.choice(rng), r.choice(rng)), velocity = (r.choice(rng),r.choice(rng), r.choice(rng)), size = r.randint(0,3), mass = 0) for s in range(0, particleCount)] 
+
+if particleCount <= 100:
+    sphereList = [sphere(pos = vector(r.choice(startPosRng),r.choice(startPosRng), r.choice(startPosRng)), 
+                                    radius = r.choice(sizeRng), make_trail = False, emissive = False) for p in range(particleCount)]
+else:
+    sphereList = [simple_sphere(pos = vector(r.choice(startPosRng),r.choice(startPosRng), r.choice(startPosRng)), 
+                                           radius = r.choice(sizeRng), make_trail = False, emissive = False) for p in range(particleCount)]
 
 
-boundingField = (100,100,100)
 
-sphereList = [sphere(pos = vector(r.randint(-75,75), r.randint(-75,75), r.randint(-75,75)), radius = 1, make_trail = False) for s in range(particleCount)]
-sphereArray = cp.asarray([s.pos.x,s.pos.y,s.pos.z] for s in sphereList) #TODO Fix this array transmutation magic.
+sphereArrayMatrix = cp.asarray([[s.pos.x,s.pos.y,s.pos.z] for s in sphereList])
 
 
-sphereVelocities = [vector(r.randint(-100, 100), r.randint(-100, 100), r.randint(-100, 100)) for s in sphereList]
-sphereVelocityArray = cp.asarray([v.x,v.y,v.z] for v in sphereVelocities)
 
-def sphereMove(sphereVelocityArray, sphereList):
-    for s in sphereArray:
-        velo = sphereVelocityArray.__getitem__(sphereArray.where(sphereArray == s))
-        s.pos += velo * dt
+sphereVelocitiesVectors = [vector(r.randint(-1000, 1000), r.randint(-1000, 1000), r.randint(-1000, 1000)) for s in sphereList]
 
-def sphereCollision(sphereList, sphereVelocities):
+sphereVelocityMatrix = cp.asarray([[v.x,v.y,v.z] for v in sphereVelocitiesVectors])
 
-    for s in sphereList:
+gravityMatrix = cp.asarray([[-9.81*dt] for v in sphereVelocityMatrix])
 
-        otherSphereList = [e for e in sphereList if e != s and math.sqrt(((e.pos.x-s.pos.x)**2)+((e.pos.y-s.pos.y)**2)+(((e.pos.z-s.pos.z)**2))) < s.radius*4]
 
-        sphereVelocity = sphereVelocities[sphereList.index(s)-1]
+def sphereMove(sphereArrayMatrix, t):
+
+    for index, s in enumerate(sphereArrayMatrix):
+        velo = sphereVelocityMatrix[index, :]
+        sphereVelocityMatrix[index, :] += gravity * dt
+        s += velo * dt
+
+        sphereList[index].pos = vector(s[0],s[1],s[2])
+
+
+
+def sphereMoveAlternate(sphereArrayMatrix, sphereVelocityMatrix):
+
+    sphereArrayMatrix += sphereVelocityMatrix * dt
+
+    sphereVelocityMatrix[:, 1] += gravityMatrix[:, 0]
+
+    posMatrix = cp.asnumpy(sphereArrayMatrix)
+
+    for index, s in enumerate(posMatrix):
+        sphereList[index].pos = vector(s[0],s[1],s[2])
+
+
+def sphereCollision(sphereList, sphereVelocityMatrix):
+
+    for index, s in enumerate(sphereList):
+
+        otherSphereList = [e for e in sphereList if e != s and math.sqrt(((e.pos.x-s.pos.x)**2)+((e.pos.y-s.pos.y)**2)+(((e.pos.z-s.pos.z)**2))) < s.radius*2]
+
+        sphereVelocity = sphereVelocitiesVectors[index]
 
         for e in otherSphereList:
             if abs(e.pos.x-s.pos.x) < (e.radius + s.radius) and math.sqrt(((e.pos.x-s.pos.x)**2)+((e.pos.y-s.pos.y)**2)+(((e.pos.z-s.pos.z)**2))) < s.radius*2:
@@ -62,11 +108,31 @@ def sphereCollision(sphereList, sphereVelocities):
         if s.pos.z + s.radius >= boundingField[2]/2 or s.pos.z - s.radius <= -boundingField[2]/2:
             sphereVelocity.z = -sphereVelocity.z
 
+    sphereArrayMatrix = cp.asarray([[s.pos.x,s.pos.y,s.pos.z] for s in sphereList])
 
-while True:
+    sphereVelocityMatrix = cp.asarray([[v.x,v.y,v.z] for v in sphereVelocitiesVectors])
+
+    return sphereArrayMatrix, sphereVelocityMatrix
+
+#print(benchmark(sphereMoveAlternate, (sphereArrayMatrix, sphereVelocityMatrix), n_repeat= 10000))
+
+#print(benchmark(sphereMove, args = (sphereArrayMatrix, t), n_repeat= 10000))
+
+#print(benchmark(sphereCollision, (sphereList, sphereVelocityMatrix), n_repeat= 10000))
+
+
+
+simRunning = True
+
+while simRunning is True:
     rate(tickRate)
     t += dt
 
-    sphereMove(sphereVelocities,sphereList)
 
-    sphereCollision(sphereList, sphereVelocities)
+    sphereArrayMatrix, sphereVelocityMatrix = sphereCollision(sphereList, sphereVelocityMatrix)
+
+
+    sphereMoveAlternate(sphereArrayMatrix, sphereVelocityMatrix)
+
+    print("Calculation Done! T = " + str(t) + " Seconds")
+

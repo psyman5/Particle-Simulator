@@ -4,7 +4,7 @@ import pandas as pd
 import random as r
 import math
 
-
+r.seed(2651651)
 
 class SphereParticle():
         def __init__(self, position, velocity, size, mass):
@@ -38,17 +38,17 @@ scene = vp.canvas(width = 1280, height = 720)
 
 gravityVector = vp.vector(0, -9.81,0)
 
-particleCount = abs(30)
+particleCount = abs(5000)
 
-rate = 100
+rate = 10000
 dt = .001
 t = 0
 
-boundingField = (6000,6000,6000)
+boundingField = (60000,60000,60000)
 
 startPosRng = [s for s in range(int(-boundingField[0]/2), int(boundingField[0]/2))]
 
-veloRng = [s for s in range(-5000, 5000) if s != 0]
+veloRng = [s for s in range(-100, 100) if s != 0]
 
 sizeRng = [s for s in range(90) if s != 0]
 
@@ -203,12 +203,13 @@ while simRunning is True:
 
             sphereVelocities[sphereList.index(s)-1].y += -9.81* dt
 
-            if sphereVelocities[sphereList.index(s)-1].y < 0:
+            '''if sphereVelocities[sphereList.index(s)-1].y < 0:
                 s.color = vp.vector(1, 0, 0)
             elif sphereVelocities[sphereList.index(s)-1].y > 0: 
                 s.color = vp.vector(0, 0 , 1)
             elif sphereVelocities[sphereList.index(s)-1].y == 0:
-                s.color = vp.vector(0, 1 , 0)
+                s.color = vp.vector(0, 1 , 0)'''
             
+        print("Calculation Done! " + t)
     except RuntimeError:
         SystemExit()
