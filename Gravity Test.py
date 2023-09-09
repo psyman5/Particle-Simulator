@@ -3,7 +3,7 @@ import numpy as np
 import random as r
 
 sphere1 = vp.sphere(pos= vp.vector(0,0,0), radius = 1, make_trail = True)
-sphere1.velocity = vp.vector(1,5,4)
+sphere1.velocity = vp.vector(0,0,0)
 sphere1.mass = 5
 sphere1.p = vp.vector(sphere1.velocity.x * sphere1.mass, sphere1.velocity.y * sphere1.mass,sphere1.velocity.z * sphere1.mass)
 
@@ -36,7 +36,7 @@ gravity = vp.vector(0, -g ,0)
 def sphereMoveMethod1(sphere1, dt):
     sphere1.pos += sphere1.velocity
     sphere1.velocity.y += g * dt**2
-    sphere1.p.y = sphere1.velocity.y * sphere1.mass
+    #sphere1.p.y = sphere1.velocity.y * sphere1.mass
     return sphere1.pos, sphere1.velocity.y
 
 def sphereMoveMethod2(sphere1,dt):

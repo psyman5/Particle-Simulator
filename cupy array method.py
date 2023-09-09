@@ -10,18 +10,23 @@ from cupyx.profiler import benchmark
 
 scene = canvas(width = 1280, height = 720)
 
-tickRate = 1000000
-particleCount = 1000
+speedGraph = graph(title='Speed Graph', xtitle='Particles', ytitle='Speed' )
+#curve = gvbars(color=color.red, interval = 10)
+
+tickRate = 1000
+particleCount = 25
 t = 0
-dt = .0000001
+dt = 1/10
 
 boundingField = (1000,1000,1000)
 
+boundingBox = box(pos = vector(0,0,0), size = vector(1000,1000,1000), color = color.blue)
+
 startPosRng = [s for s in range(int(-boundingField[0]/2), int(boundingField[0]/2))]
 
-veloRng = [s for s in range(-10000, 10000) if s != 0]
+veloRng = [s for s in range(-1000, 1000) if s != 0]
 
-sizeRng = [s for s in range(40) if s != 0]
+sizeRng = [s for s in range(10) if s != 0]
 
 gravity = -9.81
 
@@ -40,18 +45,22 @@ sphereArrayMatrix = cp.asarray([[s.pos.x,s.pos.y,s.pos.z] for s in sphereList])
 
 
 
-sphereVelocitiesVectors = [vector(r.randint(-1000, 1000), r.randint(-1000, 1000), r.randint(-1000, 1000)) for s in sphereList]
+#sphereVelocitiesVectors = [vector(r.choice(veloRng), r.choice(veloRng), r.choice(veloRng)) for s in sphereList]
+
+sphereVelocitiesVectors = [vector(0,0,0) for s in sphereList]
 
 sphereVelocityMatrix = cp.asarray([[v.x,v.y,v.z] for v in sphereVelocitiesVectors])
 
-gravityMatrix = cp.asarray([[-9.81*dt] for v in sphereVelocityMatrix])
+gravityMatrix = cp.asarray([[-9.81] for v in sphereVelocityMatrix])
 
 
 def sphereMove(sphereArrayMatrix, t):
 
     for index, s in enumerate(sphereArrayMatrix):
         velo = sphereVelocityMatrix[index, :]
+        print(sphereVelocityMatrix)
         sphereVelocityMatrix[index, :] += gravity * dt
+        print(sphereVelocityMatrix)
         s += velo * dt
 
         sphereList[index].pos = vector(s[0],s[1],s[2])
@@ -60,9 +69,9 @@ def sphereMove(sphereArrayMatrix, t):
 
 def sphereMoveAlternate(sphereArrayMatrix, sphereVelocityMatrix):
 
-    sphereArrayMatrix += sphereVelocityMatrix * dt
+    sphereVelocityMatrix[:, 1] += gravityMatrix[:, 0] * dt
 
-    sphereVelocityMatrix[:, 1] += gravityMatrix[:, 0]
+    sphereArrayMatrix += sphereVelocityMatrix * dt
 
     posMatrix = cp.asnumpy(sphereArrayMatrix)
 
@@ -74,7 +83,7 @@ def sphereCollision(sphereList, sphereVelocityMatrix):
 
     for index, s in enumerate(sphereList):
 
-        otherSphereList = [e for e in sphereList if e != s and math.sqrt(((e.pos.x-s.pos.x)**2)+((e.pos.y-s.pos.y)**2)+(((e.pos.z-s.pos.z)**2))) < s.radius*2]
+        otherSphereList = [e for e in sphereList if e != s and math.sqrt(((e.pos.x-s.pos.x)**2)+((e.pos.y-s.pos.y)**2)+(((e.pos.z-s.pos.z)**2))) < s.radius*5]
 
         sphereVelocity = sphereVelocitiesVectors[index]
 
@@ -114,6 +123,20 @@ def sphereCollision(sphereList, sphereVelocityMatrix):
 
     return sphereArrayMatrix, sphereVelocityMatrix
 
+def sphereColouring(sphereVelocityMatrix):
+    for index, s in enumerate(sphereVelocityMatrix[:, 1]):
+        if s < 0:
+            sphereList[index].color = (vector(1,0,0))
+
+        else:
+            sphereList[index].color = (vector(0,0,1))
+
+
+def graphingFunction():
+    for index, s in enumerate(sphereVelocityMatrix[:, 1]):
+        curve.plot(index, s)
+
+
 #print(benchmark(sphereMoveAlternate, (sphereArrayMatrix, sphereVelocityMatrix), n_repeat= 10000))
 
 #print(benchmark(sphereMove, args = (sphereArrayMatrix, t), n_repeat= 10000))
@@ -131,8 +154,13 @@ while simRunning is True:
 
     sphereArrayMatrix, sphereVelocityMatrix = sphereCollision(sphereList, sphereVelocityMatrix)
 
-
     sphereMoveAlternate(sphereArrayMatrix, sphereVelocityMatrix)
+
+    sphereColouring(sphereVelocityMatrix)
+
+
+
+    
 
     print("Calculation Done! T = " + str(t) + " Seconds")
 
